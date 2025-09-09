@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DungeonSlime", "DungeonSlime\DungeonSlime.csproj", "{13ED71AD-98E2-4251-9662-009C85908558}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoGameLibrary", "MonoGameLibrary\MonoGameLibrary.csproj", "{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{13ED71AD-98E2-4251-9662-009C85908558}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Debug|x64.Build.0 = Debug|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Debug|x86.Build.0 = Debug|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Release|x64.ActiveCfg = Release|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Release|x64.Build.0 = Release|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Release|x86.ActiveCfg = Release|Any CPU
+		{13ED71AD-98E2-4251-9662-009C85908558}.Release|x86.Build.0 = Release|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Debug|x64.Build.0 = Debug|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Debug|x86.Build.0 = Debug|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Release|x64.ActiveCfg = Release|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Release|x64.Build.0 = Release|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Release|x86.ActiveCfg = Release|Any CPU
+		{89B5DBDF-CD0E-41DD-8F81-E3F08758531F}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
