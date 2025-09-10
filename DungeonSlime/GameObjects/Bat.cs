@@ -9,7 +9,17 @@ namespace DungeonSlime.GameObjects;
 public class Bat
 {
     private const float MOVEMENT_SPEED = 5.0f;
+    private const float GOLDEN_SPEED_MULTIPLIER = 2.0f;
+    private const float GOLDEN_DURATION = 5.0f; // Golden state lasts 10 seconds
+    private const float GOLDEN_CHANCE = 0.20f; // 20% chance to become golden
 
+    // Speed multiplier for different difficulties
+    private float _speedMultiplier = 1.0f;
+
+    // Golden bat state
+    private bool _isGolden = false;
+    private float _goldenTimer = 0f;
+     
     // The velocity of the bat that defines the direction and how much in that
     // direction to update the bats position each update cycle.
     private Vector2 _velocity;
@@ -24,6 +34,11 @@ public class Bat
     /// Gets or Sets the position of the bat.
     /// </summary>
     public Vector2 Position { get; set; }
+
+    /// <summary>
+    /// Gets whether this bat is currently in golden state.
+    /// </summary>
+    public bool IsGolden => _isGolden;
 
     /// <summary>
     /// Creates a new Bat using the specified animated sprite and sound effect.
@@ -49,9 +64,51 @@ public class Bat
         float y = (float)Math.Sin(angle);
         Vector2 direction = new Vector2(x, y);
 
+        // Check if this bat should become golden
+        if (Random.Shared.NextSingle() < GOLDEN_CHANCE)
+        {
+            MakeGolden();
+        }
+        else
+        {
+            _isGolden = false;
+            _goldenTimer = 0f;
+            
+            // Set sprite color to normal
+            _sprite.Color = Color.White;
+        }
+
+        // Calculate final speed with all multipliers
+        float finalSpeed = MOVEMENT_SPEED * _speedMultiplier;
+        if (_isGolden)
+        {
+            finalSpeed *= GOLDEN_SPEED_MULTIPLIER;
+        }
+
         // Multiply the direction vector by the movement speed to get the
         // final velocity
-        _velocity = direction * MOVEMENT_SPEED;
+        _velocity = direction * finalSpeed;
+    }
+
+    /// <summary>
+    /// Makes this bat golden for a limited time.
+    /// </summary>
+    private void MakeGolden()
+    {
+        _isGolden = true;
+        _goldenTimer = GOLDEN_DURATION;
+        
+        // Set the sprite color to gold
+        _sprite.Color = Color.Gold;
+    }
+
+    /// <summary>
+    /// Sets the speed multiplier for this bat.
+    /// </summary>
+    /// <param name="multiplier">The speed multiplier to apply.</param>
+    public void SetSpeedMultiplier(float multiplier)
+    {
+        _speedMultiplier = multiplier;
     }
 
     /// <summary>
@@ -111,6 +168,27 @@ public class Bat
     {
         // Update the animated sprite
         _sprite.Update(gameTime);
+
+        // Update golden timer if the bat is golden
+        if (_isGolden)
+        {
+            _goldenTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            
+            // Check if golden time has expired
+            if (_goldenTimer <= 0f)
+            {
+                _isGolden = false;
+                _goldenTimer = 0f;
+                
+                // Reset sprite color to normal
+                _sprite.Color = Color.White;
+                
+                // Recalculate velocity with normal speed
+                Vector2 direction = Vector2.Normalize(_velocity);
+                float normalSpeed = MOVEMENT_SPEED * _speedMultiplier;
+                _velocity = direction * normalSpeed;
+            }
+        }
 
         // Update the position of the bat based on the velocity.
         Position += _velocity;

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using DungeonSlime.GameObjects;
 using DungeonSlime.UI;
+using DungeonSlime.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -23,8 +25,8 @@ public class GameScene : Scene
     // Reference to the slime.
     private Slime _slime;
 
-    // Reference to the bat.
-    private Bat _bat;
+    // Reference to the bat(s) - using list to support multiple bats
+    private List<Bat> _bats;
 
     // Defines the tilemap to draw.
     private Tilemap _tilemap;
@@ -50,6 +52,9 @@ public class GameScene : Scene
 
     // The speed of the fade to grayscale effect.
     private const float FADE_SPEED = 0.02f;
+
+    // Difficulty service for handling different control schemes
+    private SlimeDifficultyService _difficultyService;
 
     public override void Initialize()
     {
@@ -126,9 +131,12 @@ public class GameScene : Scene
         // Initialize the slime.
         _slime.Initialize(slimePos, _tilemap.TileWidth);
 
-        // Initialize the bat.
-        _bat.RandomizeVelocity();
-        PositionBatAwayFromSlime();
+        // Initialize the bat(s).
+        foreach (var bat in _bats)
+        {
+            bat.RandomizeVelocity();
+            PositionBatAwayFromSlime(bat);
+        }
 
         // Reset the score.
         _score = 0;
@@ -139,6 +147,12 @@ public class GameScene : Scene
 
     public override void LoadContent()
     {
+        // Initialize the difficulty service
+        _difficultyService = new SlimeDifficultyService();
+        
+        // Set the difficulty based on the title screen selection
+        _difficultyService.CurrentDifficulty = TitleScene.SelectedDifficulty;
+
         // Create the texture atlas from the XML configuration file.
         TextureAtlas atlas = TextureAtlas.FromFile(Core.Content, "images/atlas-definition.xml");
 
@@ -150,8 +164,8 @@ public class GameScene : Scene
         AnimatedSprite slimeAnimation = atlas.CreateAnimatedSprite("slime-animation");
         slimeAnimation.Scale = new Vector2(4.0f, 4.0f);
 
-        // Create the slime.
-        _slime = new Slime(slimeAnimation);
+        // Create the slime with the difficulty service.
+        _slime = new Slime(slimeAnimation, _difficultyService);
 
         // Create the animated sprite for the bat from the atlas.
         AnimatedSprite batAnimation = atlas.CreateAnimatedSprite("bat-animation");
@@ -160,8 +174,28 @@ public class GameScene : Scene
         // Load the bounce sound effect for the bat.
         SoundEffect bounceSoundEffect = Content.Load<SoundEffect>("audio/bounce");
 
-        // Create the bat.
-        _bat = new Bat(batAnimation, bounceSoundEffect);
+        // Create the bat(s) based on difficulty
+        _bats = new List<Bat>();
+        
+        // Determine bat speed based on difficulty
+        float batSpeedMultiplier = _difficultyService.CurrentDifficulty == DifficultyMode.Hard ? 2.0f : 1.0f;
+        
+        // Create first bat
+        AnimatedSprite batAnimation1 = atlas.CreateAnimatedSprite("bat-animation");
+        batAnimation1.Scale = new Vector2(4.0f, 4.0f);
+        Bat bat1 = new Bat(batAnimation1, bounceSoundEffect);
+        bat1.SetSpeedMultiplier(batSpeedMultiplier);
+        _bats.Add(bat1);
+        
+        // Create second bat for easy mode
+        if (_difficultyService.CurrentDifficulty == DifficultyMode.Easy)
+        {
+            AnimatedSprite batAnimation2 = atlas.CreateAnimatedSprite("bat-animation");
+            batAnimation2.Scale = new Vector2(4.0f, 4.0f);
+            Bat bat2 = new Bat(batAnimation2, bounceSoundEffect);
+            bat2.SetSpeedMultiplier(batSpeedMultiplier);
+            _bats.Add(bat2);
+        }
 
         // Load the collect sound effect.
         _collectSoundEffect = Content.Load<SoundEffect>("audio/collect");
@@ -203,8 +237,11 @@ public class GameScene : Scene
         // Update the slime.
         _slime.Update(gameTime);
 
-        // Update the bat.
-        _bat.Update(gameTime);
+        // Update the bats.
+        foreach (var bat in _bats)
+        {
+            bat.Update(gameTime);
+        }
 
         // Perform collision checks.
         CollisionChecks();
@@ -213,31 +250,70 @@ public class GameScene : Scene
 
     private void CollisionChecks()
     {
-        // Capture the current bounds of the slime and bat.
+        // Capture the current bounds of the slime.
         Circle slimeBounds = _slime.GetBounds();
-        Circle batBounds = _bat.GetBounds();
 
-        // FIrst perform a collision check to see if the slime is colliding with
-        // the bat, which means the slime eats the bat.
-        if (slimeBounds.Intersects(batBounds))
+        // Check collision with each bat
+        for (int i = 0; i < _bats.Count; i++)
         {
-            // Move the bat to a new position away from the slime.
-            PositionBatAwayFromSlime();
+            Bat bat = _bats[i];
+            Circle batBounds = bat.GetBounds();
 
-            // Randomize the velocity of the bat.
-            _bat.RandomizeVelocity();
+            // First perform a collision check to see if the slime is colliding with
+            // the bat, which means the slime eats the bat.
+            if (slimeBounds.Intersects(batBounds))
+            {
+                // Check if it's a golden bat for bonus rewards
+                bool wasGolden = bat.IsGolden;
+                
+                // Move the bat to a new position away from the slime.
+                PositionBatAwayFromSlime(bat);
 
-            // Tell the slime to grow.
-            _slime.Grow();
+                // Randomize the velocity of the bat.
+                bat.RandomizeVelocity();
 
-            // Increment the score.
-            _score += 100;
+                // Tell the slime to grow - twice if it was a golden bat
+                if (wasGolden)
+                {
+                    _slime.Grow();
+                    _slime.Grow();
+                    // Golden bat gives double points too
+                    _score += 200;
+                }
+                else
+                {
+                    _slime.Grow();
+                    _score += 100;
+                }
 
-            // Update the score display on the UI.
-            _ui.UpdateScoreText(_score);
+                // Update the score display on the UI.
+                _ui.UpdateScoreText(_score);
 
-            // Play the collect sound effect.
-            Core.Audio.PlaySoundEffect(_collectSoundEffect);
+                // Play the collect sound effect.
+                Core.Audio.PlaySoundEffect(_collectSoundEffect);
+            }
+
+            // Finally, check if the bat is colliding with a wall by validating if
+            // it is within the bounds of the room.  If it is outside the room
+            // bounds, then it collided with a wall, and the bat should bounce
+            // off of that wall.
+            if (batBounds.Top < _roomBounds.Top)
+            {
+                bat.Bounce(Vector2.UnitY);
+            }
+            else if (batBounds.Bottom > _roomBounds.Bottom)
+            {
+                bat.Bounce(-Vector2.UnitY);
+            }
+
+            if (batBounds.Left < _roomBounds.Left)
+            {
+                bat.Bounce(Vector2.UnitX);
+            }
+            else if (batBounds.Right > _roomBounds.Right)
+            {
+                bat.Bounce(-Vector2.UnitX);
+            }
         }
 
         // Next check if the slime is colliding with the wall by validating if
@@ -251,31 +327,9 @@ public class GameScene : Scene
             GameOver();
             return;
         }
-
-        // Finally, check if the bat is colliding with a wall by validating if
-        // it is within the bounds of the room.  If it is outside the room
-        // bounds, then it collided with a wall, and the bat should bounce
-        // off of that wall.
-        if (batBounds.Top < _roomBounds.Top)
-        {
-            _bat.Bounce(Vector2.UnitY);
-        }
-        else if (batBounds.Bottom > _roomBounds.Bottom)
-        {
-            _bat.Bounce(-Vector2.UnitY);
-        }
-
-        if (batBounds.Left < _roomBounds.Left)
-        {
-            _bat.Bounce(Vector2.UnitX);
-        }
-        else if (batBounds.Right > _roomBounds.Right)
-        {
-            _bat.Bounce(-Vector2.UnitX);
-        }
     }
 
-    private void PositionBatAwayFromSlime()
+    private void PositionBatAwayFromSlime(Bat bat)
     {
         // Calculate the position that is in the center of the bounds
         // of the room.
@@ -292,7 +346,7 @@ public class GameScene : Scene
         Vector2 centerToSlime = slimeCenter - roomCenter;
 
         // Get the bounds of the bat.
-        Circle batBounds = _bat.GetBounds();
+        Circle batBounds = bat.GetBounds();
 
         // Calculate the amount of padding we will add to the new position of
         // the bat to ensure it is not sticking to walls
@@ -349,7 +403,7 @@ public class GameScene : Scene
         }
 
         // Assign the new bat position.
-        _bat.Position = newBatPosition;
+        bat.Position = newBatPosition;
     }
 
     private void OnSlimeBodyCollision(object sender, EventArgs args)
@@ -382,6 +436,9 @@ public class GameScene : Scene
 
     private void GameOver()
     {
+        // Save the high score
+        bool isNewHighScore = HighScoreService.AddScore(_score, TitleScene.SelectedDifficulty);
+        
         // Show the game over panel.
         _ui.ShowGameOverPanel();
 
@@ -390,6 +447,25 @@ public class GameScene : Scene
 
         // Set the grayscale effect saturation to 1.0f
         _saturation = 1.0f;
+        
+        // TODO: Could show "NEW HIGH SCORE!" message if isNewHighScore is true
+    }
+
+    private void ToggleDifficulty()
+    {
+        // Toggle between easy and hard difficulty
+        DifficultyMode newMode = _difficultyService.CurrentDifficulty == DifficultyMode.Easy 
+            ? DifficultyMode.Hard 
+            : DifficultyMode.Easy;
+            
+        _difficultyService.CurrentDifficulty = newMode;
+        _slime.SetDifficultyMode(newMode);
+        
+        // Reinitialize the slime with the new difficulty
+        Vector2 slimePos = new Vector2();
+        slimePos.X = (_tilemap.Columns / 2) * _tilemap.TileWidth;
+        slimePos.Y = (_tilemap.Rows / 2) * _tilemap.TileHeight;
+        _slime.Initialize(slimePos, _tilemap.TileWidth);
     }
 
     public override void Draw(GameTime gameTime)
@@ -417,8 +493,11 @@ public class GameScene : Scene
         // Draw the slime.
         _slime.Draw();
 
-        // Draw the bat.
-        _bat.Draw();
+        // Draw the bats.
+        foreach (var bat in _bats)
+        {
+            bat.Draw();
+        }
 
         // Always end the sprite batch when finished.
         Core.SpriteBatch.End();

@@ -1,5 +1,6 @@
 ﻿using System;
 using DungeonSlime.UI;
+using DungeonSlime.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -21,6 +22,16 @@ public class TitleScene : Scene
     private SoundEffect _uiSoundEffect;
     private Panel _titleScreenButtonsPanel;
     private Panel _optionsPanel;
+    private Panel _difficultyPanel;
+
+    // Static property to store the selected difficulty across scenes
+    public static DifficultyMode SelectedDifficulty { get; set; } = DifficultyMode.Easy;
+
+    // Difficulty selection buttons
+    private AnimatedButton _easyButton;
+    private AnimatedButton _mediumButton;
+    private AnimatedButton _hardButton;
+    private AnimatedButton _difficultyBackButton;
 
     // The font to use to render normal text.
     private SpriteFont _font;
@@ -189,16 +200,24 @@ public class TitleScene : Scene
         _titleScreenButtonsPanel.AddToRoot();
 
         AnimatedButton startButton = new AnimatedButton(_atlas);
-        startButton.Anchor(Gum.Wireframe.Anchor.BottomLeft);
-        startButton.Visual.X = 50;
-        startButton.Visual.Y = -12;
-        startButton.Text = "Start";
-        startButton.Click += HandleStartClicked;
+        startButton.Anchor(Gum.Wireframe.Anchor.Center);
+        startButton.Visual.X = 0;
+        startButton.Visual.Y = 20;
+        startButton.Text = "Start Game";
+        startButton.Click += HandleDifficultyClicked;
         _titleScreenButtonsPanel.AddChild(startButton);
 
+        AnimatedButton highScoresButton = new AnimatedButton(_atlas);
+        highScoresButton.Anchor(Gum.Wireframe.Anchor.Bottom);
+        highScoresButton.Visual.X = -40;
+        highScoresButton.Visual.Y = -12;
+        highScoresButton.Text = "High Scores";
+        highScoresButton.Click += HandleHighScoresClicked;
+        _titleScreenButtonsPanel.AddChild(highScoresButton);
+
         _optionsButton = new AnimatedButton(_atlas);
-        _optionsButton.Anchor(Gum.Wireframe.Anchor.BottomRight);
-        _optionsButton.Visual.X = -50;
+        _optionsButton.Anchor(Gum.Wireframe.Anchor.Bottom);
+        _optionsButton.Visual.X = 50;
         _optionsButton.Visual.Y = -12;
         _optionsButton.Text = "Options";
         _optionsButton.Click += HandleOptionsClicked;
@@ -215,6 +234,28 @@ public class TitleScene : Scene
 
         // Change to the game scene to start the game.
         Core.ChangeScene(new GameScene());
+    }
+
+    private void HandleDifficultyClicked(object sender, EventArgs e)
+    {
+        // A UI interaction occurred, play the sound effect
+        Core.Audio.PlaySoundEffect(_uiSoundEffect);
+
+        // Hide the title panel and show the difficulty selection panel
+        _titleScreenButtonsPanel.IsVisible = false;
+        _difficultyPanel.IsVisible = true;
+
+        // Focus the appropriate difficulty button based on current selection
+        UpdateDifficultyButtonFocus();
+    }
+
+    private void HandleHighScoresClicked(object sender, EventArgs e)
+    {
+        // A UI interaction occurred, play the sound effect
+        Core.Audio.PlaySoundEffect(_uiSoundEffect);
+
+        // Change to the high scores scene
+        Core.ChangeScene(new HighScoreScene());
     }
 
     private void HandleOptionsClicked(object sender, EventArgs e)
@@ -347,6 +388,119 @@ public class TitleScene : Scene
 
         CreateTitlePanel();
         CreateOptionsPanel();
+        CreateDifficultyPanel();
+    }
+
+    private void CreateDifficultyPanel()
+    {
+        _difficultyPanel = new Panel();
+        _difficultyPanel.Dock(Gum.Wireframe.Dock.Fill);
+        _difficultyPanel.IsVisible = false;
+        _difficultyPanel.AddToRoot();
+
+        TextRuntime difficultyText = new TextRuntime();
+        difficultyText.Anchor(Gum.Wireframe.Anchor.Top);
+        difficultyText.X = -120;
+        difficultyText.Y = -150;
+        difficultyText.Text = "SELECT DIFFICULTY";
+        difficultyText.UseCustomFont = true;
+        difficultyText.FontScale = 0.6f;
+        difficultyText.CustomFontFile = @"fonts/04b_30.fnt";
+        _difficultyPanel.AddChild(difficultyText);
+
+        // Easy button (left)
+        _easyButton = new AnimatedButton(_atlas);
+        _easyButton.Text = "EASY";
+        _easyButton.Anchor(Gum.Wireframe.Anchor.Left);
+        _easyButton.Visual.X = 50;
+        _easyButton.Visual.Y = 0f;
+        _easyButton.Click += HandleEasyClicked;
+        _difficultyPanel.AddChild(_easyButton);
+
+        // Medium button (center)
+        _mediumButton = new AnimatedButton(_atlas);
+        _mediumButton.Text = "MEDIUM";
+        _mediumButton.Anchor(Gum.Wireframe.Anchor.Center);
+        _mediumButton.Visual.X = 0f;
+        _mediumButton.Visual.Y = 0f;
+        _mediumButton.Click += HandleMediumClicked;
+        _difficultyPanel.AddChild(_mediumButton);
+
+        // Hard button (right)
+        _hardButton = new AnimatedButton(_atlas);
+        _hardButton.Text = "HARD";
+        _hardButton.Anchor(Gum.Wireframe.Anchor.Right);
+        _hardButton.Visual.X = -50f;
+        _hardButton.Visual.Y = 0f;
+        _hardButton.Click += HandleHardClicked;
+        _difficultyPanel.AddChild(_hardButton);
+
+        // Back button
+        _difficultyBackButton = new AnimatedButton(_atlas);
+        _difficultyBackButton.Text = "BACK";
+        _difficultyBackButton.Anchor(Gum.Wireframe.Anchor.BottomRight);
+        _difficultyBackButton.X = -28f;
+        _difficultyBackButton.Y = -10f;
+        _difficultyBackButton.Click += HandleDifficultyBackClicked;
+        _difficultyPanel.AddChild(_difficultyBackButton);
+    }
+
+    private void UpdateDifficultyButtonFocus()
+    {
+        // Clear all focus first
+        _easyButton.IsFocused = false;
+        _mediumButton.IsFocused = false;
+        _hardButton.IsFocused = false;
+
+        // Set focus based on current selection
+        switch (SelectedDifficulty)
+        {
+            case DifficultyMode.Easy:
+                _easyButton.IsFocused = true;
+                break;
+            case DifficultyMode.Medium:
+                _mediumButton.IsFocused = true;
+                break;
+            case DifficultyMode.Hard:
+                _hardButton.IsFocused = true;
+                break;
+        }
+    }
+
+    private void HandleEasyClicked(object sender, EventArgs e)
+    {
+        Core.Audio.PlaySoundEffect(_uiSoundEffect);
+        SelectedDifficulty = DifficultyMode.Easy;
+        StartGameWithDifficulty();
+    }
+
+    private void HandleMediumClicked(object sender, EventArgs e)
+    {
+        Core.Audio.PlaySoundEffect(_uiSoundEffect);
+        SelectedDifficulty = DifficultyMode.Medium;
+        StartGameWithDifficulty();
+    }
+
+    private void HandleHardClicked(object sender, EventArgs e)
+    {
+        Core.Audio.PlaySoundEffect(_uiSoundEffect);
+        SelectedDifficulty = DifficultyMode.Hard;
+        StartGameWithDifficulty();
+    }
+
+    private void HandleDifficultyBackClicked(object sender, EventArgs e)
+    {
+        Core.Audio.PlaySoundEffect(_uiSoundEffect);
+        
+        // Hide difficulty panel and show title panel
+        _difficultyPanel.IsVisible = false;
+        _titleScreenButtonsPanel.IsVisible = true;
+    }
+
+    private void StartGameWithDifficulty()
+    {
+        // Start the game with the selected difficulty
+        Core.ChangeScene(new GameScene());
     }
 
 }
