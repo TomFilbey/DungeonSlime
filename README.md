@@ -4,13 +4,23 @@ A classic snake-style game built with MonoGame and C#. Navigate your growing sli
 
 ## Download
 
-**[Download DungeonSlime-win-x64](https://derarbiter.itch.io/dungeon-slime?secret=8sLtkb84e3KBbsryYvQaoOr2As)**
+The game is available as a standalone Windows x64 executable on Itch.io.
 
-The game is available as a standalone Windows x64 executable on itch.io.
+**[Download DungeonSlime-win-x64](https://derarbiter.itch.io/dungeon-slime?secret=8sLtkb84e3KBbsryYvQaoOr2As)**
 
 ## Screenshots
 
-*Add screenshots here when available*
+### Main Menu
+![Main Menu](Screenshots/Main%20Menu.PNG)
+
+### Easy Mode Gameplay
+![Easy Mode](Screenshots/Easy%20Mode.PNG)
+
+### Medium/Hard Mode Gameplay
+![Medium/Hard Mode](Screenshots/Medium_Hard%20Mode.PNG)
+
+### High Scores
+![High Scores](Screenshots/Highscores.PNG)
 
 ## Development Requirements
 
@@ -37,6 +47,15 @@ The game uses the following NuGet packages:
 5. Run the project (F5)
 
 The project targets **.NET 8.0** and uses the **DesktopGL** platform for cross-platform compatibility.
+
+### Publishing for Distribution
+To create a standalone executable for distribution:
+
+```bash
+dotnet publish -c Release -r win-x64 -p:PublishReadyToRun=false -p:TieredCompilation=false --self-contained
+```
+
+This will create a self-contained Windows x64 executable in the `bin/Release/net8.0/win-x64/publish/` directory.
 
 ## Gameplay
 
@@ -106,14 +125,8 @@ DungeonSlime/
     └── Scenes/           # Scene management
 ```
 
-## License
-
-*Add license information here*
-
-## Contributing
-
-*Add contribution guidelines here if you want to accept contributions*
-
 ## Credits
 
-*Add credits for art, music, and development here*
+This game was created following the MonoGame Tutorial series found at:
+https://docs.monogame.net/articles/tutorials/index.html
+
