@@ -13,8 +13,8 @@ public class Slime
 {
     // A constant value that represents the amount of time to wait between
     // movement updates.
-    private static readonly TimeSpan s_movementTime = TimeSpan.FromMilliseconds(200);
-    private static readonly TimeSpan s_mediumMovementTime = TimeSpan.FromMilliseconds(300); // Slower for medium (half speed)
+    private static readonly TimeSpan s_movementTime = TimeSpan.FromMilliseconds(100);  // Hard mode timing
+    private static readonly TimeSpan s_mediumMovementTime = TimeSpan.FromMilliseconds(200); // Medium mode timing
 
     // The amount of time that has elapsed since the last movement update.
     private TimeSpan _movementTimer;
@@ -137,8 +137,17 @@ public class Slime
         }
         else
         {
-            // Hard/Medium mode: Use input buffering for discrete movement
-            _difficultyService.HandleHardInput(ref _inputBuffer, ref _segments);
+            // Use different input handling based on difficulty
+            if (_difficultyService.CurrentDifficulty == DifficultyMode.Medium)
+            {
+                // Medium mode: Use smaller input buffer for more responsive controls
+                _difficultyService.HandleMediumInput(ref _inputBuffer, ref _segments);
+            }
+            else
+            {
+                // Hard mode: Use larger input buffer for classic snake experience
+                _difficultyService.HandleHardInput(ref _inputBuffer, ref _segments);
+            }
         }
     }
 
@@ -314,24 +323,44 @@ public class Slime
         if (_isEasyMode)
         {
             // Easy mode: Draw all segments at their direct positions
-            foreach (SlimeSegment segment in _segments)
+            for (int i = 0; i < _segments.Count; i++)
             {
+                SlimeSegment segment = _segments[i];
+                
+                // Set different colors for head vs body
+                Color segmentColor = i == 0 ? Color.LightGreen : Color.Green;
+                Color originalColor = _sprite.Color;
+                _sprite.Color = segmentColor;
+                
                 _sprite.Draw(Core.SpriteBatch, segment.At);
+                
+                // Restore original color
+                _sprite.Color = originalColor;
             }
         }
         else
         {
-            // Hard mode: Iterate through each segment and draw it
-            foreach (SlimeSegment segment in _segments)
+            // Hard/Medium mode: Iterate through each segment and draw it
+            for (int i = 0; i < _segments.Count; i++)
             {
+                SlimeSegment segment = _segments[i];
+                
                 // Calculate the visual position of the segment at the moment by
                 // lerping between its "at" and "to" position by the movement
                 // offset lerp amount
                 Vector2 pos = Vector2.Lerp(segment.At, segment.To, _movementProgress);
 
+                // Set different colors for head vs body
+                Color segmentColor = i == 0 ? Color.LightGreen : Color.Green;
+                Color originalColor = _sprite.Color;
+                _sprite.Color = segmentColor;
+
                 // Draw the slime sprite at the calculated visual position of this
                 // segment
                 _sprite.Draw(Core.SpriteBatch, pos);
+                
+                // Restore original color
+                _sprite.Color = originalColor;
             }
         }
     }
